@@ -1,0 +1,17 @@
+{
+  "name": "docs-link-integrity-checker",
+  "version": "0.0.0",
+  "description": "Check Markdown and HTML links, anchors and redirect targets in documentation.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edilec/docs-link-integrity-checker"
+  }
+}
