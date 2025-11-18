@@ -1,17 +1,51 @@
 {
   "name": "docs-link-integrity-checker",
-  "version": "0.0.0",
-  "description": "Check Markdown and HTML links, anchors and redirect targets in documentation.",
+  "version": "0.1.0",
+  "description": "Resolve Markdown and HTML documentation links, anchors and relative paths inside a bounded documentation root, without fetching anything.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test"
+    "lint": "node --check src/index.mjs && node --check src/parse.mjs && node --check src/paths.mjs && node --check bin/docs-link-integrity-checker.mjs && node --check test/links.test.mjs && node --check test/cli.test.mjs",
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**",
+    "example": "node bin/docs-link-integrity-checker.mjs --root examples/docs-clean --status examples/link-status.json",
+    "pack:check": "npm pack --dry-run",
+    "check": "npm run lint && npm test && npm run example && npm run pack:check"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/edilec/docs-link-integrity-checker"
-  }
+    "url": "git+https://github.com/edilec/docs-link-integrity-checker.git"
+  },
+  "bin": {
+    "docs-link-integrity-checker": "./bin/docs-link-integrity-checker.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "documentation",
+    "links",
+    "anchors",
+    "markdown",
+    "html",
+    "path-traversal",
+    "cli"
+  ],
+  "author": "Edilec Private Limited",
+  "bugs": {
+    "url": "https://github.com/edilec/docs-link-integrity-checker/issues"
+  },
+  "homepage": "https://github.com/edilec/docs-link-integrity-checker#readme"
 }
