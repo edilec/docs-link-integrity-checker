@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { dirname, resolve } from 'node:path'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
@@ -22,6 +24,26 @@ test('the healthy example with an imported status exits zero', () => {
   assert.equal(result.stderr, '')
   assert.match(result.stdout, /status pass/)
   assert.match(result.stdout, /2 verified from an imported status, 0 unverified/)
+})
+
+test('a single broken local link fails the run and exits one', async () => {
+  const base = await mkdtemp(join(tmpdir(), 'docs-link-integrity-cli-'))
+  try {
+    await writeFile(join(base, 'index.md'), '# Index\n\nA [missing file](gone.md) link.\n', 'utf8')
+    const result = run(['--root', base, '--json'])
+    const report = JSON.parse(result.stdout)
+
+    // One broken local link is the only thing wrong here, so the exit code and
+    // the status are pinned to that single error and nothing else.
+    assert.equal(report.findings.length, 1)
+    assert.equal(report.findings[0].ruleId, 'local-target-missing')
+    assert.equal(report.findings[0].severity, 'error')
+    assert.equal(report.summary.errors, 1)
+    assert.equal(report.status, 'fail')
+    assert.equal(result.status, 1)
+  } finally {
+    await rm(base, { recursive: true, force: true })
+  }
 })
 
 test('the broken example exits one and names every rule it broke', () => {

@@ -61,6 +61,29 @@ test('the healthy example passes with an imported status document', async () => 
   assert.equal(report.summary.statusCheckedAt, '2026-09-01T00:00:00Z')
 })
 
+test('a link to a file that is not there is an error that fails the run', async () => {
+  await withTree(
+    {
+      'docs/index.md': '# Index\n\nA [missing file](gone.md) link.\n',
+    },
+    async (base) => {
+      const report = await checkDocumentationLinks({ root: join(base, 'docs') })
+      const missing = findingsFor(report, 'local-target-missing')
+
+      // The severity is the whole point of the tool: a broken local link must
+      // fail the run, not merely mention itself in a warning.
+      assert.equal(missing.length, 1)
+      assert.equal(missing[0].severity, 'error')
+      assert.equal(missing[0].target, 'gone.md')
+      assert.equal(missing[0].location.file, 'index.md')
+      assert.equal(report.findings.length, 1)
+      assert.equal(report.summary.errors, 1)
+      assert.equal(report.summary.warnings, 0)
+      assert.equal(report.status, 'fail')
+    },
+  )
+})
+
 test('broken local fragments are located by file, line and anchor', async () => {
   const report = await checkDocumentationLinks({ root: brokenRoot })
   const fragments = findingsFor(report, 'fragment-missing')
