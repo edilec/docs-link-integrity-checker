@@ -89,18 +89,23 @@ test('broken local fragments are located by file, line and anchor', async () => 
   const fragments = findingsFor(report, 'fragment-missing')
 
   assert.equal(report.status, 'fail')
-  assert.equal(fragments.length, 2)
+  assert.equal(fragments.length, 3)
 
-  const crossFile = fragments.find((finding) => finding.message.includes('notes.md'))
+  const crossFile = fragments.find((finding) => finding.target === 'notes.md#instalation')
   assert.equal(crossFile.location.file, 'index.md')
   assert.equal(crossFile.location.pointer, '/links/1')
   assert.equal(crossFile.line, 9)
   assert.equal(crossFile.severity, 'error')
-  assert.equal(crossFile.target, 'notes.md#instalation')
+  assert.match(crossFile.message, /notes\.md/)
 
-  const samePage = fragments.find((finding) => finding.message.includes('this document'))
-  assert.equal(samePage.target, '#overveiw')
+  const samePage = fragments.find((finding) => finding.target === '#overveiw')
+  assert.equal(samePage.location.file, 'index.md')
   assert.equal(samePage.line, 15)
+  assert.match(samePage.message, /this document/)
+
+  const inGuide = fragments.find((finding) => finding.location.file === 'guide/reference.md')
+  assert.equal(inGuide.target, '#refrence')
+  assert.equal(inGuide.severity, 'error')
 })
 
 test('a heading that does exist resolves, including its duplicate suffix', async () => {
@@ -303,13 +308,66 @@ test('the same input produces a byte-identical report twice', async () => {
 
 test('findings sort by file, then document order, then rule', async () => {
   const report = await checkDocumentationLinks({ root: brokenRoot })
-  const keys = report.findings.map((finding) => [finding.location.file, finding.line])
 
-  for (let index = 1; index < keys.length; index += 1) {
-    const [previousFile] = keys[index - 1]
-    const [currentFile] = keys[index]
-    assert.ok(previousFile <= currentFile, `${previousFile} must not sort after ${currentFile}`)
-  }
+  // The whole order is pinned, over a fixture with findings in two documents,
+  // so reversing any sort key is a failure rather than an invisible reshuffle.
+  // The duplicate-anchor row is file-level, so it sorts ahead of every link
+  // finding in its file even though its line is the last one.
+  assert.deepEqual(
+    report.findings.map((finding) => [finding.location.file, finding.line, finding.ruleId]),
+    [
+      ['guide/reference.md', 6, 'local-target-missing'],
+      ['guide/reference.md', 7, 'fragment-missing'],
+      ['index.md', 17, 'duplicate-anchor'],
+      ['index.md', 8, 'local-target-missing'],
+      ['index.md', 9, 'fragment-missing'],
+      ['index.md', 10, 'path-escapes-root'],
+      ['index.md', 11, 'path-escapes-root'],
+      ['index.md', 12, 'unsafe-target'],
+      ['index.md', 13, 'directory-target'],
+      ['index.md', 14, 'empty-target'],
+      ['index.md', 15, 'fragment-missing'],
+    ],
+  )
+})
+
+test('findings that share a document order break the tie by rule, then target', async () => {
+  await withTree(
+    {
+      'docs/ties.md': [
+        '# Ties',
+        '',
+        '## Beta',
+        '',
+        '## Beta',
+        '',
+        '## Alpha',
+        '',
+        '## Alpha',
+        '',
+        '[a](ties.md) [b](ties.md) [c](ties.md)',
+        '',
+      ].join('\n'),
+    },
+    async (base) => {
+      const report = await checkDocumentationLinks({
+        root: join(base, 'docs'),
+        limits: { maxLinksPerFile: 2 },
+      })
+
+      // Every row here is file-level, so all three share document order -1 and
+      // are recorded in the order beta, alpha, too-many-links: the rule id
+      // decides first, then the raw target.
+      assert.deepEqual(
+        report.findings.map((finding) => [finding.ruleId, finding.target ?? null]),
+        [
+          ['duplicate-anchor', 'alpha'],
+          ['duplicate-anchor', 'beta'],
+          ['too-many-links', null],
+        ],
+      )
+    },
+  )
 })
 
 test('code, comments and scripts are not mistaken for links', async () => {

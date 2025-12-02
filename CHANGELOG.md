@@ -28,7 +28,8 @@ All notable changes to this project are documented in this file.
 - a CLI with `--help`, `--json`, limit flags, the report on stdout, diagnostics
   on stderr, and exit codes 0 / 1 / 2;
 - runnable healthy and deliberately broken example documentation sets and an
-  example status import;
+  example status import; the broken set spreads its findings over two documents,
+  so the documented finding order is demonstrated as well as the rules;
 - the rule catalog, limits, report shape and determinism guarantee in
   `docs/link-rules.md`.
 

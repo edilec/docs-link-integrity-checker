@@ -58,14 +58,18 @@ WARNING index.md:14:34 link-unverified External link is unverified: no status do
 WARNING index.md:15:38 link-unverified External link is unverified: no status document was imported. This tool never fetches anything.
 ```
 
-The deliberately broken set demonstrates each failure rule:
+The deliberately broken set demonstrates each failure rule, in two documents so the grouping
+is visible:
 
 ```sh
 node bin/docs-link-integrity-checker.mjs --root examples/docs-broken
 ```
 
 ```text
-3 document(s), 11 link(s): 6 error, 3 warning, 0 info, status fail.
+3 document(s), 13 link(s): 8 error, 3 warning, 0 info, status fail.
+0 external link(s): 0 verified from an imported status, 0 unverified.
+ERROR   guide/reference.md:6:35 local-target-missing Target does not exist inside the documentation root.
+ERROR   guide/reference.md:7:25 fragment-missing No anchor "refrence" is defined in this document.
 WARNING index.md:17:1 duplicate-anchor Anchor "overview" is defined more than once; a link to it lands on the first definition.
 ERROR   index.md:8:20 local-target-missing Target does not exist inside the documentation root.
 ERROR   index.md:9:23 fragment-missing No anchor "instalation" is defined in notes.md.
