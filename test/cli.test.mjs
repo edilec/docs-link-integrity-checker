@@ -102,6 +102,8 @@ test('--json puts the report on stdout and diagnostics on stderr', () => {
 test('no finding leaks an absolute host path', () => {
   const report = JSON.parse(run([...BROKEN, '--json']).stdout)
 
+  // An empty findings array would satisfy the loop below for the wrong reason.
+  assert.equal(report.findings.length, 11)
   for (const finding of report.findings) {
     assert.equal(finding.location.file.startsWith('/'), false)
     assert.equal(finding.location.file.includes(projectDirectory), false)
@@ -110,10 +112,18 @@ test('no finding leaks an absolute host path', () => {
 
 test('repeated runs produce byte-identical stdout', () => {
   const args = [...BROKEN, '--json']
-  assert.equal(run(args).stdout, run(args).stdout)
+  const broken = run(args)
+
+  // Two crashed runs would also agree on an empty stdout.
+  assert.equal(broken.status, 1)
+  assert.equal(JSON.parse(broken.stdout).findings.length, 11)
+  assert.equal(broken.stdout, run(args).stdout)
 
   const cleanArgs = [...CLEAN, ...STATUS, '--json']
-  assert.equal(run(cleanArgs).stdout, run(cleanArgs).stdout)
+  const clean = run(cleanArgs)
+  assert.equal(clean.status, 0)
+  assert.equal(JSON.parse(clean.stdout).summary.links, 12)
+  assert.equal(clean.stdout, run(cleanArgs).stdout)
 })
 
 test('a bound that is exceeded is reported and exits two', () => {
@@ -122,6 +132,7 @@ test('a bound that is exceeded is reported and exits two', () => {
 
   assert.equal(result.status, 2)
   assert.equal(report.status, 'incomplete')
+  assert.equal(report.findings.length, 3)
   assert.equal(report.findings.every((finding) => finding.ruleId === 'file-too-large'), true)
   assert.equal(report.summary.checked, 0)
 })

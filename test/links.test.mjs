@@ -299,10 +299,13 @@ test('the same input produces a byte-identical report twice', async () => {
   const first = await checkDocumentationLinks({ root: brokenRoot })
   const second = await checkDocumentationLinks({ root: brokenRoot })
 
+  // Comparing two empty reports would agree for the wrong reason.
+  assert.equal(first.findings.length, 11)
   assert.equal(JSON.stringify(first, null, 2), JSON.stringify(second, null, 2))
 
   const clean = await checkDocumentationLinks({ root: cleanRoot, status: STATUS })
   const cleanAgain = await checkDocumentationLinks({ root: cleanRoot, status: STATUS })
+  assert.equal(clean.summary.links, 12)
   assert.equal(JSON.stringify(clean), JSON.stringify(cleanAgain))
 })
 
