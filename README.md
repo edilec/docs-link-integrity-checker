@@ -56,6 +56,7 @@ node bin/docs-link-integrity-checker.mjs --root examples/docs-clean
 2 external link(s): 0 verified from an imported status, 2 unverified.
 WARNING index.md:14:34 link-unverified External link is unverified: no status document was imported. This tool never fetches anything.
 WARNING index.md:15:38 link-unverified External link is unverified: no status document was imported. This tool never fetches anything.
+INFO    index.md:19:18 unsupported-scheme Target uses the "mailto" scheme, which this tool does not resolve.
 ```
 
 The deliberately broken set demonstrates each failure rule, in two documents so the grouping
