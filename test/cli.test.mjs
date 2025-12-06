@@ -96,7 +96,11 @@ test('--json puts the report on stdout and diagnostics on stderr', () => {
 
   const incomplete = run([...CLEAN, '--json'])
   assert.equal(JSON.parse(incomplete.stdout).status, 'incomplete')
-  assert.notEqual(incomplete.stderr, '')
+  // Any output at all, a crash trace included, would satisfy "not empty".
+  assert.equal(
+    incomplete.stderr,
+    'incomplete: 2 unverified external link(s), 0 document(s) not examined.\n',
+  )
 })
 
 test('no finding leaks an absolute host path', () => {
