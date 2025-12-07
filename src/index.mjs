@@ -26,6 +26,34 @@ export const DEFAULT_LIMITS = Object.freeze({
 
 export const EXTERNAL_STATES = Object.freeze(['ok', 'broken', 'unknown'])
 
+/**
+ * The authoritative rule severity table.
+ *
+ * Severity is the whole difference between a run that fails and one that
+ * passes, so it must not be a literal scattered across two dozen construction
+ * sites where one can be flipped without anything noticing. Every finding takes
+ * its severity from here, and `docs/link-rules.md` is asserted against this
+ * table, so the code and the documented catalog cannot drift apart.
+ */
+export const RULE_SEVERITY = Object.freeze({
+  'directory-target': 'warning',
+  'directory-too-deep': 'error',
+  'duplicate-anchor': 'warning',
+  'empty-target': 'warning',
+  'external-broken': 'error',
+  'file-too-large': 'error',
+  'file-unreadable': 'error',
+  'fragment-missing': 'error',
+  'link-unverified': 'warning',
+  'local-target-missing': 'error',
+  'path-escapes-root': 'error',
+  'symlink-skipped': 'warning',
+  'too-many-files': 'error',
+  'too-many-links': 'error',
+  'unsafe-target': 'error',
+  'unsupported-scheme': 'info',
+})
+
 /** Fragments the HTML specification resolves without an element of that id. */
 const SPECIAL_FRAGMENTS = Object.freeze(['top'])
 
@@ -514,7 +542,11 @@ async function checkLocalLink(context, document, classified, base) {
 function toFinding(row) {
   const location = { file: row.file }
   if (row.pointer !== undefined) location.pointer = row.pointer
-  const finding = { ruleId: row.ruleId, severity: row.severity, message: row.message, location }
+  const severity = RULE_SEVERITY[row.ruleId]
+  if (severity === undefined) {
+    throw new Error(`Rule "${row.ruleId}" is not in RULE_SEVERITY; add it to the table and to docs/link-rules.md.`)
+  }
+  const finding = { ruleId: row.ruleId, severity, message: row.message, location }
   if (row.evidence !== undefined && row.evidence !== '') finding.evidence = row.evidence
   if (row.suggestion !== undefined) finding.suggestion = row.suggestion
   if (row.target !== undefined) finding.target = row.target
