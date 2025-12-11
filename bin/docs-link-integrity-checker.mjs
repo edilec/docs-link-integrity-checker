@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-import { checkDocumentationLinks, formatReport } from '../src/index.mjs'
+import { checkDocumentationLinks, formatReport, parseFailureDetail } from '../src/index.mjs'
 
 const HELP = `docs-link-integrity-checker
 
@@ -67,11 +67,24 @@ function parseArguments(argv) {
   return options
 }
 
+/**
+ * The read and the parse fail separately on purpose. A filesystem error
+ * describes the caller's own argument, but a parse error describes the file's
+ * contents -- V8 quotes the input back in one of its two message shapes -- and
+ * that must not reach stderr. `parseFailureDetail` keeps the offset and drops
+ * the quoted half.
+ */
 async function loadStatus(path) {
+  let raw
   try {
-    return JSON.parse(await readFile(resolve(path), 'utf8'))
+    raw = await readFile(resolve(path), 'utf8')
   } catch (error) {
     throw new Error(`Could not read status import: ${error.message}`)
+  }
+  try {
+    return JSON.parse(raw)
+  } catch (error) {
+    throw new Error(`The status import is not valid JSON: ${parseFailureDetail(error)}.`)
   }
 }
 

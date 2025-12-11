@@ -156,6 +156,17 @@ A finding carries `ruleId`, `severity`, `message`, `location` (`file` relative t
 the report. `evidence` is the source line, flattened to one line, stripped of control characters
 and bounded to 120 characters.
 
+## A status import that will not parse
+
+The diagnostic names the offset the parse failed at -- position, line and column -- and never the
+text it failed on. V8 reports a parse failure two ways and one of them quotes the input back,
+`Unexpected token 'A', "AKIAIOSFODNN7EXAMPLE" is not valid JSON`, which reproduces the first ten
+characters of the file, or the whole file when it is shorter than that. A status import short
+enough to be nothing but a credential would otherwise be printed in full to stderr, on the one path
+an unparseable file is guaranteed to take. The quoted half is dropped before the message is built;
+the offset, which says nothing about content, is kept whole. A failure to *read* the file is
+reported separately and still names the syscall.
+
 ## Determinism guarantee
 
 Two runs over the same bytes produce byte-identical stdout.
