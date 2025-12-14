@@ -116,3 +116,71 @@ test('parseFailureDetail refuses a wording it was not taught rather than guessin
   )
   assert.equal(parseFailureDetail(undefined), 'the document could not be parsed as JSON')
 })
+
+/**
+ * The error V8 raises for a document that must not parse, so every case below
+ * is pinned against a real message rather than a hand-written one.
+ */
+function refusal(document) {
+  try {
+    JSON.parse(document)
+  } catch (error) {
+    return error
+  }
+  throw new Error(`${JSON.stringify(document)} parsed, so it pins nothing`)
+}
+
+/**
+ * No prefix of the document four characters or longer survives into the detail.
+ * Four rather than the eight `assertNoCanary` uses, because V8 quotes only the
+ * first ten characters of a long document: a check for ten would still pass
+ * against a detail carrying `AKIA`.
+ */
+function assertNoPrefixOf(document, detail, label) {
+  for (let length = 4; length <= document.length; length += 1) {
+    const prefix = document.slice(0, length)
+    assert.equal(
+      detail.includes(prefix),
+      false,
+      `${label}: the detail carries ${JSON.stringify(prefix)} -- ${JSON.stringify(detail)}`
+    )
+  }
+}
+
+test('a status import whose own text reads "at position 1" is not sliced back out', () => {
+  // This is what the ordering buys. Looking for the offset before recognising
+  // the quoting shape finds that phrase INSIDE the quoted span whenever the
+  // document supplies it, and slices the document straight back out.
+  const document = 'at position 1'
+  const message = refusal(document).message
+  assert.equal(message.includes(document), true, 'V8 no longer quotes the input; this pin needs revisiting')
+
+  const detail = parseFailureDetail(refusal(document))
+  assert.equal(detail.includes('"'), false, `a quote means a quoted span survived: ${JSON.stringify(detail)}`)
+  assert.equal(detail.includes(document), false, `the document came back out: ${JSON.stringify(detail)}`)
+  // Pinned exactly, because the closing guard would turn the reverted ordering
+  // into the generic sentence: leak-free, and no longer a diagnostic. Both are
+  // defects, and only an exact pin catches the second one.
+  assert.equal(detail, "unexpected token 'a' at the start of the document")
+})
+
+test('a long status import whose first ten characters are sensitive keeps none of them', () => {
+  const document = `${CANARY} and then a great many more characters that never parse`
+  const detail = parseFailureDetail(refusal(document))
+  assert.equal(detail.includes('"'), false)
+  assertNoPrefixOf(document, detail, 'long document')
+  assert.equal(detail, "unexpected token 'A' at the start of the document")
+})
+
+test('a quoted span carrying a newline is still recognised as a quoted span', () => {
+  // The quoting regex needs the `s` flag: without it `.*` stops at the line
+  // feed, the shape is missed, and the message falls through to a branch that
+  // was never meant to see it.
+  const document = '}x\n'
+  assert.equal(refusal(document).message.includes('\n'), true, 'the quoted span really does carry the newline')
+
+  const detail = parseFailureDetail(refusal(document))
+  assert.equal(detail.includes('"'), false)
+  assert.equal(detail.includes('\n'), false)
+  assert.equal(detail, "unexpected token '}' at the start of the document")
+})
