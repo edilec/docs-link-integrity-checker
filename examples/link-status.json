@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "checkedAt": "2026-09-01T00:00:00Z",
+  "links": {
+    "https://example.com/urls": {
+      "state": "ok",
+      "httpStatus": 200,
+      "anchors": ["fragments"]
+    },
+    "https://nodejs.org/api/path.html": {
+      "state": "ok",
+      "httpStatus": 200
+    }
+  }
+}
