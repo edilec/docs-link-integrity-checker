@@ -35,6 +35,11 @@ again against the real path, so a symlink cannot be used to step outside either.
 For a walkthrough of both checked-in fixtures and the checker's limits, see the
 [Docs Link Integrity Checker worked example](https://edilec.com/open-source/docs-link-integrity-checker/).
 
+[![Concept illustration of documentation pages with one broken link; open the worked example](https://edilec.com/brand/social/docs-link-integrity-checker-concept.jpg)](https://edilec.com/open-source/docs-link-integrity-checker/)
+
+The illustration is conceptual. The runnable results below come from the public
+synthetic fixtures, not from an analysis of a live website.
+
 ```sh
 node bin/docs-link-integrity-checker.mjs \
   --root examples/docs-clean \
