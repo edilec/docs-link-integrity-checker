@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.1.0 - 2026-09-28
 
 ### Added
 
@@ -47,5 +47,3 @@ All notable changes to this project are documented in this file.
   canary through the real binary and asserts it is absent from stdout, from
   stderr and from every prefix of it down to eight characters, because V8 quotes
   only ten.
-
-No release has been published.
