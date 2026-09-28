@@ -32,6 +32,9 @@ again against the real path, so a symlink cannot be used to step outside either.
 
 ## Quick start
 
+For a walkthrough of both checked-in fixtures and the checker's limits, see the
+[Docs Link Integrity Checker worked example](https://edilec.com/open-source/docs-link-integrity-checker/).
+
 ```sh
 node bin/docs-link-integrity-checker.mjs \
   --root examples/docs-clean \
